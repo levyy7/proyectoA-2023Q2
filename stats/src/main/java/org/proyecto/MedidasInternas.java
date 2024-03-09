@@ -3,7 +3,6 @@ package org.proyecto;
 import java.util.Arrays;
 
 import static java.lang.Double.*;
-import static java.lang.Double.max;
 import static java.lang.Math.pow;
 
 public class MedidasInternas {

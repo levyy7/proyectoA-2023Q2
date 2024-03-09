@@ -1,8 +1,11 @@
 package org.proyecto;
 
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,13 +14,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GestorCSV {
-    public DatosEntrada leerCSV() throws Exception {
-        File file = new File("data/eneko.csv");
+    public DatosEntrada leerCSV(String puntosPath, String clusteringPath) throws Exception {
+        File file = new File("data/" + clusteringPath);
         String absolutePath = file.getAbsolutePath();
-        File file2 = new File("data/profe.csv");
+        File file2 = new File("data/" + puntosPath);
         String absolutePath2 = file2.getAbsolutePath();
-        List<String[]> enekoDatos = readAllLines(Path.of(absolutePath));
-        List<String[]> profeDatos = readAllLines(Path.of(absolutePath2));
+        List<String[]> enekoDatos = readData(Path.of(absolutePath));
+        List<String[]> profeDatos = readData(Path.of(absolutePath2));
 
         int dimensiones = Integer.parseInt(enekoDatos.getFirst()[0]);
         int clusters = Integer.parseInt(enekoDatos.getFirst()[1]);
@@ -35,15 +38,37 @@ public class GestorCSV {
 
     }
 
-    public void guardarCSV(DatosSalida datos) {
+    public void guardarCSV(String path, DatosSalida datos) throws IOException {
+        List<String[]> args = new ArrayList<>();
+        String[] dunnIndexArray = new String[datos.dunnIndex().length];
+        for (int i = 0; i < datos.dunnIndex().length; i++) dunnIndexArray[i] = String.valueOf(datos.dunnIndex()[i]);
+        args.add(dunnIndexArray);
+        String[] averageIndexArray = new String[datos.averageIndex().length];
+        for (int i = 0; i < datos.averageIndex().length; i++)
+            averageIndexArray[i] = String.valueOf(datos.averageIndex()[i]);
+        args.add(averageIndexArray);
+        args.add(new String[]{String.valueOf(datos.averageTotalIndex())});
+        args.add(new String[]{String.valueOf(datos.randIndex())});
+        writeData(Path.of("data/" + path), args);
 
     }
 
-    public List<String[]> readAllLines(Path filePath) throws Exception {
+    public List<String[]> readData(Path filePath) throws Exception {
         try (Reader reader = Files.newBufferedReader(filePath)) {
             try (CSVReader csvReader = new CSVReader(reader)) {
                 return csvReader.readAll();
             }
         }
+    }
+
+    public static void writeData(Path filePath, List<String[]> args) throws IOException {
+        File file = new File(String.valueOf(filePath));
+        FileWriter outputfile = new FileWriter(file);
+
+        CSVWriter writer = new CSVWriter(outputfile);
+
+        writer.writeAll(args, false);
+
+        writer.close();
     }
 }
