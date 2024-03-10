@@ -14,15 +14,14 @@ typedef vector<double> PointND;
 class Kmeans {
     protected:
         const int MAX_ITER = 100;
+        const string FILE_INPUT = "../data/input/";
+        const string FILE_OUTPUT = "../data/output/kmeans/";
 
-        int n; //Num Points
-        int d; //Num Dimensions
         int k; //Num Clusters
         vector<PointND> data;
-        vector<int> expected_cluster;
-
-        //unordered_set<PointND> clusters;
-
+        
+        vector<int> final_assignation;
+ 
 
 
         //Squared euclidean distance for n dimensional points
@@ -37,7 +36,7 @@ class Kmeans {
 
             //Forgy Initialization method
             default_random_engine generator;
-            uniform_int_distribution<int> distribution(0, n);
+            uniform_int_distribution<int> distribution(0, data.size());
             
             while (clusters_id.size() != k) clusters_id.insert(distribution(generator));
 
@@ -53,17 +52,18 @@ class Kmeans {
 
             for (int i = 0; i < data.size(); ++i) {
                 double min_dis = DBL_MAX;
+                int min_cluster = -1;
+
                 for (int j = 0; j < clusters.size(); ++j) {
                     double dis = sed(data[i], clusters[j]);
-                    int min_cluster = -1;
-
+                    
                     if (dis < min_dis) {
                         min_dis = dis;
                         min_cluster = j;
                     }
-
-                    newAssignations[j].push_back(i);
                 }
+
+                newAssignations[min_cluster].push_back(i);
             }
 
             return newAssignations;
@@ -73,7 +73,7 @@ class Kmeans {
             bool no_change = true;
 
             for (int i = 0; i < clusters.size(); ++i) {
-                PointND newCentroid(d, 0);
+                PointND newCentroid(data[0].size(), 0);
                 
                 for (int p_it : assignations[i]) {
                     PointND p = data[p_it];
@@ -91,15 +91,16 @@ class Kmeans {
             return no_change;
         }
 
+        
+
     public:
         
         Kmeans() {
         }
 
-
         void load_data(string filename) {
 
-            ifstream file(filename);
+            ifstream file(FILE_INPUT + filename);
 
             if (!file.is_open()) throw runtime_error("File not opened");
 
@@ -118,6 +119,20 @@ class Kmeans {
             }
         }
 
+        void write_results(string filename) {
+
+            fstream file;
+
+            file.open(FILE_OUTPUT + filename, ios::out | ios::app);
+
+            if (!file.is_open()) throw runtime_error("Output File not opened");
+
+            for (int x : final_assignation) file << x << "\n";
+
+            file.close();
+        }
+        
+
         void print_data() {
             //cout << "Num Points:" << n << ", ";
             //cout << "Num Dimensions:" << d << ", ";
@@ -132,7 +147,8 @@ class Kmeans {
             }
         }
 
-        virtual void execute() {
+        virtual void execute(int num_clusters) {
+            k = num_clusters;
             vector<vector<int>> assignation;
             vector<PointND> clusters = initialize_clusters();            
 
@@ -141,10 +157,23 @@ class Kmeans {
             while (not converged and count != MAX_ITER) {
                 assignation = assign_cluster(clusters);
                 converged = update_cluster(assignation, clusters);
+                
+                cout << "Iter:" << count << endl;
+                for (vector<int> v : assignation) {
+                    cout << "Cluster: ";
+                    for (int x : v) cout << x << ' ';
+                    cout << endl;
+                }
 
                 ++count;
             }
 
+            
+            final_assignation = vector<int>(data.size());
+            for (int i = 0; i < assignation.size(); ++i) {
+                for (int j = 0; j < assignation[i].size(); ++j) 
+                    final_assignation[assignation[i][j]] = i;
+            }
             
         }
 
