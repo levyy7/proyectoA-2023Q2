@@ -1,8 +1,12 @@
 package org.proyecto;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
+import static java.lang.Double.max;
+import static java.lang.Double.min;
 import static org.proyecto.MedidasExternas.calcularRandIndex;
 import static org.proyecto.MedidasInternas.calcularAverageIndex;
 import static org.proyecto.MedidasInternas.calcularDunnIndex;
@@ -23,13 +27,36 @@ public class Main {
         System.out.println("Introduce nombre archivo de los puntitos");
         String puntosPath = scanner.nextLine();
         switch (userInput) {
-            case "1", "2": { // TODO add elbow
+            case "1": {
                 System.out.println("Introduce nombre archivo de clustering");
                 String clusteringPath = scanner.nextLine();
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
+                input = normalizadorPrime(input);
                 DatosSalida datos = procesarResult(input, input);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
                 gestorJSON.guardarJSON("output_stats_clustering.json", datos);
+                break;
+            }
+            case "2": {
+                System.out.println("Introduce nombre archivo de clustering");
+                String clusteringPath = scanner.nextLine();
+                clusteringPath = clusteringPath.substring(0, clusteringPath.length() - 4);
+                List<DatosSalida> outputs = new ArrayList<>();
+                for (int i = 2; i <= 10; i++) {
+                    DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath + "-" + i + ".csv");
+                    DatosSalida datos = procesarResult(input, input);
+                    outputs.add(datos);
+                    gestorCSV.guardarCSV(clusteringPath + "_stats_clustering-" + datos.clusters() + ".csv", datos);
+                    gestorJSON.guardarJSON(clusteringPath + "_stats_clustering-" + datos.clusters() + ".json", datos);
+                }
+                for (int i = 0; i < 7; i++) {
+                    if (outputs.get(i).CHIndex() / outputs.get(i + 1).CHIndex() >= 0.95 &&
+                            outputs.get(i).CHIndex() / outputs.get(i + 1).CHIndex() <= 1.05) {
+                        System.out.println("elbow is " + outputs.get(i).clusters());
+                        break;
+                    }
+                }
+
                 break;
             }
             case "3": {
@@ -61,8 +88,29 @@ public class Main {
         double[] averageIndex = calcularAverageIndex(input);
         double averageTotalIndex = Arrays.stream(averageIndex).sum() / averageIndex.length;
         double randIndex = calcularRandIndex(input, input2);
-        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex); // Veremos que demonios devuelve el patrooon
+        int clusters = input.clusters();
+        double wcss = MedidasInternas.calcularWCSS(input);
+        double bcss = MedidasInternas.calcularBCSS(input);
+        double CHIndex = MedidasInternas.calcularCalinskiHarabaszIndex(input);
+        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex); // Veremos que demonios devuelve el patrooon
     }
 
 
+    private static DatosEntrada normalizadorPrime(DatosEntrada input) {
+        double[] minimo = new double[input.dimensiones()];
+        double[] maximo = new double[input.dimensiones()];
+        for (Punto p : input.puntos()) {
+            for (int j = 0; j < input.dimensiones(); ++j) {
+                minimo[j] = min(p.valores()[j], minimo[j]);
+                maximo[j] = max(p.valores()[j], maximo[j]);
+            }
+        }
+
+        for (Punto p : input.puntos()) {
+            for (int j = 0; j < input.dimensiones(); ++j) {
+                p.valores()[j] = (p.valores()[j] - minimo[j]) / (maximo[j] - minimo[j]);
+            }
+        }
+        return input;
+    }
 }

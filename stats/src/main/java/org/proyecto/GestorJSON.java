@@ -11,7 +11,7 @@ public class GestorJSON {
         ObjectMapper objectMapper = new ObjectMapper();
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(datos);
 
-        File file = new File("data/" + path);
+        File file = new File("data/output/stats/" + path);
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(json);
         }
