@@ -10,7 +10,7 @@ int main() {
     km.load_data(dataset + ".csv");
     for (int k = 2; k <= 10; ++k) {
         km.execute(k);
-        km.write_results(dataset + "-" + to_string(k) + "-out.csv");
+        km.write_results(dataset + "-" + to_string(k) + ".csv");
     }
     
 }

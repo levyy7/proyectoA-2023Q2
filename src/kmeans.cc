@@ -12,6 +12,105 @@ using namespace std;
 typedef vector<double> PointND;
 
 class Kmeans {
+    public:
+
+        Kmeans() {
+        }
+
+        virtual void execute(int num_clusters) {
+            k = num_clusters;
+            vector<vector<int>> assignation;
+            vector<PointND> clusters = initialize_clusters("kpp");            
+
+            bool converged = false;
+            int count = 0;
+            while (not converged and count != MAX_ITER) {
+                assignation = assign_cluster(clusters);
+                converged = update_cluster(assignation, clusters);
+                
+                cout << "Iter:" << count << endl;
+                for (vector<int> v : assignation) {
+                    cout << "Cluster: ";
+                    for (int x : v) cout << x << ' ';
+                    cout << endl;
+                }
+
+                ++count;
+            }
+
+            
+            final_assignation = vector<int>(data.size());
+            for (int i = 0; i < assignation.size(); ++i) {
+                for (int j = 0; j < assignation[i].size(); ++j) 
+                    final_assignation[assignation[i][j]] = i;
+            }
+
+            final_clusters = clusters;
+            
+        }
+
+        void load_data(string filename) {
+
+            ifstream file(FILE_INPUT + filename);
+
+            if (!file.is_open()) throw runtime_error("File not opened");
+
+            int c = -1;
+            for (string line; getline(file, line);) {
+                istringstream ss(line);
+
+                data.push_back({});
+                ++c;
+
+                
+                for (string val; getline(ss, val, ';');) {
+                    data[c].push_back(stod(val));
+                    //cout << val << ' ' << stod(val) << ' ';
+                }
+            }
+        }
+
+        void write_results(string filename) {
+
+            fstream file;
+
+            file.open(FILE_OUTPUT + filename, ios::out | ios::trunc);
+
+            if (!file.is_open()) throw runtime_error("Output File not opened");
+
+            file << data.size()<< "," << k << "\n";
+
+            for (PointND p : final_clusters) {
+                for (int i = 0; i < p.size(); ++i) {
+                    if (i != 0) file << ',';
+                    file << p[i];
+                }
+                file << "\n";
+            }
+
+            for (int x : final_assignation) file << x << "\n";
+
+            file.close();
+        }
+        
+
+        void print_data() {
+            //cout << "Num Points:" << n << ", ";
+            //cout << "Num Dimensions:" << d << ", ";
+            //cout << "Num Clusters:" << k << endl;
+
+            for (int i = 0; i < data.size(); ++i) {
+                PointND p = data[i];
+
+                cout << "Point" << i << ": ";
+                for (double x : p) cout << x << ", ";
+                cout << endl;
+            }
+        }
+
+        
+
+
     protected:
         const int MAX_ITER = 100;
         const string FILE_INPUT = "../data/input/";
@@ -21,6 +120,7 @@ class Kmeans {
         vector<PointND> data;
         
         vector<int> final_assignation;
+        vector<PointND> final_clusters;
  
 
 
@@ -31,20 +131,9 @@ class Kmeans {
             return sum;
         }
 
-        virtual vector<PointND> initialize_clusters() {
-            unordered_set<int> clusters_id;
-
-            //Forgy Initialization method
-            default_random_engine generator;
-            uniform_int_distribution<int> distribution(0, data.size());
-            
-            while (clusters_id.size() != k) clusters_id.insert(distribution(generator));
-
-            vector<PointND> clusters(k);
-            int i = 0;
-            for (int id : clusters_id) clusters[i++] = data[id];
-
-            return vector<PointND>(clusters.begin(), clusters.end());
+        virtual vector<PointND> initialize_clusters(string method) {
+            if (method == "forgy") return forgy_initialization();
+            else if (method == "kpp") return kpp_initialization();
         }
 
         virtual vector<vector<int>> assign_cluster(const vector<PointND>& clusters) {
@@ -91,90 +180,64 @@ class Kmeans {
             return no_change;
         }
 
-        
+    private:
+        vector<PointND> forgy_initialization() {
+            unordered_set<int> clusters_id;
 
-    public:
-        
-        Kmeans() {
+            //Forgy Initialization method
+            default_random_engine generator;
+            uniform_int_distribution<int> distribution(0, data.size());
+            
+            while (clusters_id.size() != k) clusters_id.insert(distribution(generator));
+
+            vector<PointND> clusters(k);
+            int i = 0;
+            for (int id : clusters_id) clusters[i++] = data[id];
+
+            return vector<PointND>(clusters.begin(), clusters.end());
         }
 
-        void load_data(string filename) {
+        vector<PointND> kpp_initialization() {
+            vector<PointND> clusters;
 
-            ifstream file(FILE_INPUT + filename);
+            //K++ Initialization method
+            default_random_engine generator;
+            uniform_int_distribution<int> distributionA(0, data.size());
+            
+            clusters.push_back(data[distributionA(generator)]);
 
-            if (!file.is_open()) throw runtime_error("File not opened");
+            vector<double> D;
+            while (clusters.size() != k) {
+                D = compute_distribution(clusters);
+                discrete_distribution<int> distributionB(D.begin(), D.end());
 
-            int c = -1;
-            for (string line; getline(file, line);) {
-                istringstream ss(line);
-
-                data.push_back({});
-                ++c;
-
-                
-                for (string val; getline(ss, val, ';');) {
-                    data[c].push_back(stod(val));
-                    //cout << val << ' ' << stod(val) << ' ';
-                }
+                clusters.push_back(data[distributionB(generator)]);
             }
+
+            return clusters;
         }
 
-        void write_results(string filename) {
+        vector<double> compute_distribution(const vector<PointND>& clusters) {
+            vector<double> res(data.size());
+            long double sum = 0;
 
-            fstream file;
-
-            file.open(FILE_OUTPUT + filename, ios::out | ios::app);
-
-            if (!file.is_open()) throw runtime_error("Output File not opened");
-
-            for (int x : final_assignation) file << x << "\n";
-
-            file.close();
-        }
-        
-
-        void print_data() {
-            //cout << "Num Points:" << n << ", ";
-            //cout << "Num Dimensions:" << d << ", ";
-            //cout << "Num Clusters:" << k << endl;
-
-            for (int i = 0; i < data.size(); ++i) {
-                PointND p = data[i];
-
-                cout << "Point" << i << ": ";
-                for (double x : p) cout << x << ", ";
-                cout << endl;
-            }
-        }
-
-        virtual void execute(int num_clusters) {
-            k = num_clusters;
-            vector<vector<int>> assignation;
-            vector<PointND> clusters = initialize_clusters();            
-
-            bool converged = false;
-            int count = 0;
-            while (not converged and count != MAX_ITER) {
-                assignation = assign_cluster(clusters);
-                converged = update_cluster(assignation, clusters);
+            for (int i = 0; i < res.size(); ++i) {
+                double min_dis = DBL_MAX;
                 
-                cout << "Iter:" << count << endl;
-                for (vector<int> v : assignation) {
-                    cout << "Cluster: ";
-                    for (int x : v) cout << x << ' ';
-                    cout << endl;
+                for (PointND c : clusters) {
+                    double dist = sed(data[i], c);
+                    if (dist < min_dis) min_dis = dist;
                 }
 
-                ++count;
+                sum += min_dis*min_dis;
+                res[i] = min_dis*min_dis;
             }
 
-            
-            final_assignation = vector<int>(data.size());
-            for (int i = 0; i < assignation.size(); ++i) {
-                for (int j = 0; j < assignation[i].size(); ++j) 
-                    final_assignation[assignation[i][j]] = i;
-            }
-            
+            for (int i = 0; i < res.size(); ++i) res[i] /= sum;
+
+            return res;
         }
+
+    
 
 };
