@@ -1,4 +1,4 @@
-#include "kmeans.cc"
+#include "kmediods.cc"
 
 using namespace std;
 

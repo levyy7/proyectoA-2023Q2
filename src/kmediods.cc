@@ -17,34 +17,46 @@ class Kmeans {
         Kmeans() {
         }
 
+        bool member(const vector<PointND>& clusters, PointND p){
+            for (int i = 0; i < clusters.size(); ++i) {
+                if (clusters[i] == p) return true;
+            }
+            return false;
+        }
+        
         virtual void execute(int num_clusters) {
             k = num_clusters;
-            vector<vector<int>> assignation;
-            vector<PointND> clusters = initialize_clusters("kpp");            
+            vector<PointND> clusters = initialize_clusters("kpp");    
+            vector<int> assignation(data.size(), -1);   
+            double totalCost = assign_cluster(clusters, assignation);
 
-            bool converged = false;
-            int count = 0;
-            while (not converged and count != MAX_ITER) {
-                assignation = assign_cluster(clusters);
-                converged = update_cluster(assignation, clusters);
-                
-                cout << "Iter:" << count << endl;
-                for (vector<int> v : assignation) {
-                    cout << "Cluster: ";
-                    for (int x : v) cout << x << ' ';
-                    cout << endl;
+            bool changed = true;
+            cout << data.size() << endl;
+            while (changed) {
+                changed = false;
+                vector<PointND> new_clusters = clusters;
+                for (int j = 0; j < k; ++j) {
+                    for (int i = 0; i < data.size(); ++i) {
+                        PointND p = data[i];
+                        if (!member(clusters, p)) {
+                            swap(new_clusters[j], p);
+                            vector<int> new_assignation = assignation;
+                            double new_cost = assign_cluster(new_clusters, new_assignation);
+                            if (new_cost < totalCost) {
+                                changed = true;
+                                totalCost = new_cost;
+                                clusters = new_clusters;
+                                assignation = new_assignation;
+                            } else {
+                                swap(new_clusters[j], p);
+                            }
+                        }
+                        cout << i << ", ";
+                    }
+                    cout << j << endl;
                 }
-
-                ++count;
             }
-
-            
-            final_assignation = vector<int>(data.size());
-            for (int i = 0; i < assignation.size(); ++i) {
-                for (int j = 0; j < assignation[i].size(); ++j) 
-                    final_assignation[assignation[i][j]] = i;
-            }
-
+            final_assignation = assignation;
             final_clusters = clusters;
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
@@ -128,13 +140,14 @@ class Kmeans {
         
         vector<int> final_assignation;
         vector<PointND> final_clusters;
+
  
 
 
         //Squared euclidean distance for n dimensional points
         double sed(const PointND& p1, const PointND& p2) {
             double sum = 0;
-            for (int i = 0; i < p1.size(); ++i) sum += (p1[i] - p2[i])*(p1[i] - p2[i]);
+            for (int i = 0; i < p1.size(); ++i) sum += abs(p1[i] - p2[i]);
             return sum;
         }
 
@@ -143,13 +156,11 @@ class Kmeans {
             else if (method == "kpp") return kpp_initialization();
         }
 
-        virtual vector<vector<int>> assign_cluster(const vector<PointND>& clusters) {
-            vector<vector<int>> newAssignations(clusters.size());
-
+        virtual double assign_cluster(const vector<PointND>& clusters, vector<int>& assignation) {
+            double total_cost = 0.0;
             for (int i = 0; i < data.size(); ++i) {
                 double min_dis = DBL_MAX;
                 int min_cluster = -1;
-
                 for (int j = 0; j < clusters.size(); ++j) {
                     double dis = sed(data[i], clusters[j]);
                     
@@ -158,34 +169,34 @@ class Kmeans {
                         min_cluster = j;
                     }
                 }
-
-                newAssignations[min_cluster].push_back(i);
+                assignation[i] = min_cluster;
+                total_cost += min_dis;
+           }
+            return total_cost;
+        } 
+/*
+        virtual void update_cluster(vector<PointND>& clusters) {
+            
+            for (int p = 0; p < k; ++p) {
+                double totalCost = 0.0;
+                int newMedoid = clusters[p];
+ 
+                for (uint i = 0; i < data.size(); ++i) {
+                    double cost = 0.0;
+                    for (uint j = 0; j < data.size(); ++j) {
+                        cost += distance(data[i], data[j]);
+                    }
+ 
+                    if (cost < totalCost) {
+                        totalCost = cost;
+                        newMedoid = i;
+                    }
+                }
+ 
+                medoids[k] = newMedoid;
             }
 
-            return newAssignations;
-        }
-
-        virtual bool update_cluster(const vector<vector<int>>& assignations, vector<PointND>& clusters) {
-            bool no_change = true;
-
-            for (int i = 0; i < clusters.size(); ++i) {
-                PointND newCentroid(data[0].size(), 0);
-                
-                for (int p_it : assignations[i]) {
-                    PointND p = data[p_it];
-                    for (int j = 0; j < p.size(); ++j) newCentroid[j] += p[j];
-                } 
-
-                for (int j = 0; j < newCentroid.size(); ++j) 
-                    newCentroid[j] /= double(assignations[i].size());
-
-                
-                if (not (clusters[i] == newCentroid)) no_change = false;
-                clusters[i] = newCentroid;
-            }
-
-            return no_change;
-        }
+        }*/
 
     private:
         vector<PointND> forgy_initialization() {

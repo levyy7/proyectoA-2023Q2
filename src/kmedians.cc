@@ -17,23 +17,40 @@ class Kmeans {
         Kmeans() {
         }
 
+        bool member(const vector<PointND>& clusters, PointND p){
+            for (int i = 0; i < clusters.size(); ++i) {
+                if (clusters[i] == p) return true;
+            }
+            return false;
+        }
+
         virtual void execute(int num_clusters) {
             k = num_clusters;
-            vector<vector<int>> assignation;
+            vector<int> assignation(data.size(), -1);  
             vector<PointND> clusters = initialize_clusters("kpp");            
-
-            bool converged = false;
+            double totalCost = assign_cluster(clusters, assignation);
+            
             int count = 0;
-            while (not converged and count != MAX_ITER) {
-                assignation = assign_cluster(clusters);
-                converged = update_cluster(assignation, clusters);
-                
-                cout << "Iter:" << count << endl;
-                for (vector<int> v : assignation) {
-                    cout << "Cluster: ";
-                    for (int x : v) cout << x << ' ';
-                    cout << endl;
+            while (count != MAX_ITER) {
+                vector<PointND> NewClusters = clusters;
+                for (int j = 0; j < k; ++j) {
+                    for (int i = 0; i < data.size(); ++i) {
+                        PointND p = data[i];
+                        if (!member(clusters, p)) {
+                            swap(NewClusters[j], p);
+                            vector<int> new_assignation = assignation;
+                            double new_cost = assign_cluster(NewClusters, new_assignation);
+                            if (new_cost < totalCost) {
+                                totalCost = new_cost;
+                                clusters = NewClusters;
+                                assignation = new_assignation;
+                            } else {
+                                swap(NewClusters[j], p);
+                            }
+                        }
+                    }
                 }
+
 
                 ++count;
             }
@@ -46,13 +63,6 @@ class Kmeans {
             }
 
             final_clusters = clusters;
-            for (PointND p : final_clusters) {
-                for (int i = 0; i < p.size(); ++i) {
-                    if (i != 0) cout << ',';
-                    cout << p[i];
-                }
-                cout << "\n";
-            }
             
         }
 
@@ -143,13 +153,11 @@ class Kmeans {
             else if (method == "kpp") return kpp_initialization();
         }
 
-        virtual vector<vector<int>> assign_cluster(const vector<PointND>& clusters) {
-            vector<vector<int>> newAssignations(clusters.size());
-
+        virtual double assign_cluster(const vector<PointND>& clusters, vector<int>& assignation) {
+            double total_cost = 0.0;
             for (int i = 0; i < data.size(); ++i) {
                 double min_dis = DBL_MAX;
                 int min_cluster = -1;
-
                 for (int j = 0; j < clusters.size(); ++j) {
                     double dis = sed(data[i], clusters[j]);
                     
@@ -158,15 +166,13 @@ class Kmeans {
                         min_cluster = j;
                     }
                 }
+                assignation[i] = min_cluster;
+                total_cost += min_dis;
+           }
+            return total_cost;
+        } 
 
-                newAssignations[min_cluster].push_back(i);
-            }
-
-            return newAssignations;
-        }
-
-        virtual bool update_cluster(const vector<vector<int>>& assignations, vector<PointND>& clusters) {
-            bool no_change = true;
+        virtual void update_cluster(const vector<vector<int>>& assignations, vector<PointND>& clusters) {
 
             for (int i = 0; i < clusters.size(); ++i) {
                 PointND newCentroid(data[0].size(), 0);
@@ -180,11 +186,9 @@ class Kmeans {
                     newCentroid[j] /= double(assignations[i].size());
 
                 
-                if (not (clusters[i] == newCentroid)) no_change = false;
                 clusters[i] = newCentroid;
             }
 
-            return no_change;
         }
 
     private:
