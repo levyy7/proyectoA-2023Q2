@@ -3,7 +3,7 @@
 using namespace std;
 
 int main() {
-    Kmeans km;
+    Kmediods km;
     string dataset = "Dataset1";
 
 

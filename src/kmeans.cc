@@ -46,13 +46,6 @@ class Kmeans {
             }
 
             final_clusters = clusters;
-            for (PointND p : final_clusters) {
-                for (int i = 0; i < p.size(); ++i) {
-                    if (i != 0) cout << ',';
-                    cout << p[i];
-                }
-                cout << "\n";
-            }
             
         }
 
