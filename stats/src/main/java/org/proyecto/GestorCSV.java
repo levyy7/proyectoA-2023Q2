@@ -20,7 +20,7 @@ public class GestorCSV {
     public DatosEntrada leerCSV(String puntosPath, String clusteringPath) throws Exception {
         File file = new File("data/output/kmeans/" + clusteringPath);
         String absolutePath = file.getAbsolutePath();
-        File file2 = new File("data/input/" + puntosPath);
+        File file2 = new File("data/output/stats/" + puntosPath);
         String absolutePath2 = file2.getAbsolutePath();
         List<String[]> enekoDatos = readData(Path.of(absolutePath));
         List<String[]> profeDatos = readData(Path.of(absolutePath2));
@@ -56,22 +56,50 @@ public class GestorCSV {
 
     }
 
-    private static void normalizadorPrime(String path) {
-        double[] minimo = new double[input.dimensiones()];
-        double[] maximo = new double[input.dimensiones()];
-        for (Punto p : input.puntos()) {
-            for (int j = 0; j < input.dimensiones(); ++j) {
+    public void normalizadorPrime(String path) throws Exception {
+        List<Punto> puntos = leerCSV(path).puntos();
+        int dimension = puntos.getFirst().valores().length;
+        //*
+        double[] minimo = new double[dimension];
+        double[] maximo = new double[dimension];
+        for (Punto p : puntos) {
+            for (int j = 0; j < dimension; ++j) {
                 minimo[j] = min(p.valores()[j], minimo[j]);
                 maximo[j] = max(p.valores()[j], maximo[j]);
             }
         }
 
-        for (Punto p : input.puntos()) {
-            for (int j = 0; j < input.dimensiones(); ++j) {
+        for (Punto p : puntos) {
+            for (int j = 0; j < dimension; ++j) {
                 p.valores()[j] = (p.valores()[j] - minimo[j]) / (maximo[j] - minimo[j]);
             }
         }
-        return input;
+        //*
+        path = path.substring(0,path.length()-4);
+        guardarCSV(path + "-normalized.csv", puntos);
+    }
+
+    private void guardarCSV(String path, List<Punto> puntos) throws IOException { //aguacate
+        List<String[]> args = new ArrayList<>();
+        int dimension = puntos.getFirst().valores().length;
+        for (Punto punto : puntos) {
+            String[] puntoArray = new String[dimension];
+            for (int j = 0; j < dimension; j++) {
+                puntoArray[j] = String.valueOf(punto.valores()[j]);
+            }
+            args.add(puntoArray);
+        }
+        writeData(Path.of("data/output/stats/" + path), args);
+    }
+
+    private PuntosEntrada leerCSV(String puntosPath) throws Exception {
+        File file2 = new File("data/input/" + puntosPath);
+        String absolutePath2 = file2.getAbsolutePath();
+        List<String[]> profeDatos = readData(Path.of(absolutePath2));
+
+        List<Punto> puntos = profeDatos.stream().map(elem -> new Punto(Arrays.stream(elem).mapToDouble(Double::parseDouble).toArray())).toList();
+
+        return new PuntosEntrada(puntos);
     }
 
     public List<String[]> readData(Path filePath) throws Exception {

@@ -1,12 +1,12 @@
 package org.proyecto;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-import static java.lang.Double.max;
-import static java.lang.Double.min;
 import static org.proyecto.MedidasExternas.calcularRandIndex;
 import static org.proyecto.MedidasInternas.calcularAverageIndex;
 import static org.proyecto.MedidasInternas.calcularDunnIndex;
@@ -21,17 +21,19 @@ public class Main {
         System.out.println("1 -> Obtener stats de un clustering");
         System.out.println("2 -> Obtener stats de un clustering con elbow");
         System.out.println("3 -> Comparar 2 stats de clustering");
-        System.out.println("4 -> que???");
+        System.out.println("4 -> normalizaaaar");
         Scanner scanner = new Scanner(System.in);
         String userInput = scanner.nextLine();
+
         System.out.println("Introduce nombre archivo de los puntitos");
         String puntosPath = scanner.nextLine();
+        gestorCSV.normalizadorPrime(puntosPath);
+
         switch (userInput) {
             case "1": {
                 System.out.println("Introduce nombre archivo de clustering");
                 String clusteringPath = scanner.nextLine();
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
-                input = normalizadorPrime(input);
                 DatosSalida datos = procesarResult(input, input);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
                 gestorJSON.guardarJSON("output_stats_clustering.json", datos);
@@ -41,9 +43,15 @@ public class Main {
                 System.out.println("Introduce nombre archivo de clustering");
                 String clusteringPath = scanner.nextLine();
                 clusteringPath = clusteringPath.substring(0, clusteringPath.length() - 4);
+                puntosPath = puntosPath.substring(0, puntosPath.length() - 4);
                 List<DatosSalida> outputs = new ArrayList<>();
+
+
+                String puntosNormalizedPath = puntosPath + "-normalized.csv";
                 for (int i = 2; i <= 10; i++) {
-                    DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath + "-" + i + ".csv");
+                    String clusteringIterationPath = clusteringPath + "-" + i + ".csv";
+                    executeEneko(puntosNormalizedPath, clusteringIterationPath, String.valueOf(i));
+                    DatosEntrada input = gestorCSV.leerCSV(puntosNormalizedPath, clusteringIterationPath);
                     DatosSalida datos = procesarResult(input, input);
                     outputs.add(datos);
                     gestorCSV.guardarCSV(clusteringPath + "_stats_clustering-" + datos.clusters() + ".csv", datos);
@@ -75,11 +83,27 @@ public class Main {
                 break;
             }
             case "4": {
-                System.out.println("quiero morir");
+                System.out.println("eneko follame ya");
                 break;
             }
             default:
                 throw new IllegalStateException("Unexpected value: " + userInput);
+        }
+    }
+
+
+    private static void executeEneko(String puntosNormalizedPath, String clusteringIterationPath, String k) {
+        String rutaEjecutable = "src/main.exe"; // Ruta al ejecutable de C++
+        File file = new File(rutaEjecutable);
+        String absolute = file.getAbsolutePath();
+        try {
+            ProcessBuilder pb = new ProcessBuilder(absolute, puntosNormalizedPath, clusteringIterationPath, k);
+            pb.directory(file.getParentFile());
+            Process proceso = pb.start();
+            proceso.waitFor(); // Esperar a que el proceso termine
+            System.out.println("El ejecutable ha finalizado con código de salida: " + proceso.exitValue());
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -93,24 +117,5 @@ public class Main {
         double bcss = MedidasInternas.calcularBCSS(input);
         double CHIndex = MedidasInternas.calcularCalinskiHarabaszIndex(input);
         return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex); // Veremos que demonios devuelve el patrooon
-    }
-
-
-    private static DatosEntrada normalizadorPrime(DatosEntrada input) {
-        double[] minimo = new double[input.dimensiones()];
-        double[] maximo = new double[input.dimensiones()];
-        for (Punto p : input.puntos()) {
-            for (int j = 0; j < input.dimensiones(); ++j) {
-                minimo[j] = min(p.valores()[j], minimo[j]);
-                maximo[j] = max(p.valores()[j], maximo[j]);
-            }
-        }
-
-        for (Punto p : input.puntos()) {
-            for (int j = 0; j < input.dimensiones(); ++j) {
-                p.valores()[j] = (p.valores()[j] - minimo[j]) / (maximo[j] - minimo[j]);
-            }
-        }
-        return input;
     }
 }

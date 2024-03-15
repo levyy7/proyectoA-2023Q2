@@ -73,20 +73,22 @@ public class MedidasInternas {
 
     public static double calcularWCSS(DatosEntrada input) {
         double sum = 0;
-        for(int i = 0; i < input.puntos().size(); ++i){
+        for (int i = 0; i < input.puntos().size(); ++i) {
             sum += calcularDistanciaEuclidianaSquared(input.puntos().get(i), input.centroides().get(input.etiquetas().get(i)));
         }
         return sum;
     }
 
     public static double calcularBCSS(DatosEntrada input) {
-        int n = input.dimensiones();
-        Punto PuntoMedio = new Punto(new double[n]);
+        Punto puntoMedio = new Punto(new double[input.dimensiones()]);
 
-        for (Punto p : input.centroides()) { //Calculadora de punto medio padre master
-            for (int i = 0; i < n; ++i) {
-                PuntoMedio.valores()[i] += p.valores()[i];
+        for (Punto p : input.puntos()) { //Calculadora de punto medio padre master
+            for (int i = 0; i < input.dimensiones(); ++i) {
+                puntoMedio.valores()[i] += p.valores()[i];
             }
+        }
+        for (int i = 0; i < input.dimensiones(); i++) {
+            puntoMedio.valores()[i] /= input.puntos().size();
         }
 
         double bcssIndex = 0; // Necesitamos que los puntos esten weighted
@@ -96,9 +98,8 @@ public class MedidasInternas {
             ++w[t];
         }
 
-        for (int j = 0; j < n; ++j) {
-            PuntoMedio.valores()[j] /= input.centroides().size();
-            bcssIndex += w[j] * calcularDistanciaEuclidianaSquared(input.centroides().get(j), PuntoMedio);
+        for (int j = 0; j < input.dimensiones(); ++j) {
+            bcssIndex += w[j] * calcularDistanciaEuclidianaSquared(input.centroides().get(j), puntoMedio);
         }
 
         return bcssIndex;

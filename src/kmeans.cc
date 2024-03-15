@@ -113,7 +113,7 @@ class Kmeans {
 
     protected:
         const int MAX_ITER = 100;
-        const string FILE_INPUT = "../data/input/";
+        const string FILE_INPUT = "../data/output/stats/";
         const string FILE_OUTPUT = "../data/output/kmeans/";
 
         int k; //Num Clusters
