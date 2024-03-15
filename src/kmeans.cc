@@ -63,7 +63,7 @@ class Kmeans {
                 ++c;
 
                 
-                for (string val; getline(ss, val, ';');) {
+                for (string val; getline(ss, val, ',');) {
                     data[c].push_back(stod(val));
                     //cout << val << ' ' << stod(val) << ' ';
                 }
@@ -77,8 +77,7 @@ class Kmeans {
             file.open(FILE_OUTPUT + filename, ios::out | ios::trunc);
 
             if (!file.is_open()) throw runtime_error("Output File not opened");
-
-            file << data.size()<< "," << k << "\n";
+            file << data[0].size() << "," << k << "\n";
 
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {

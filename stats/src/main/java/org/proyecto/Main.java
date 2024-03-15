@@ -1,7 +1,9 @@
 package org.proyecto;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,11 +30,14 @@ public class Main {
         System.out.println("Introduce nombre archivo de los puntitos");
         String puntosPath = scanner.nextLine();
         gestorCSV.normalizadorPrime(puntosPath);
-
+        puntosPath = puntosPath.substring(0, puntosPath.length() - 4);
+        puntosPath = puntosPath + "-normalized.csv";
         switch (userInput) {
             case "1": {
-                System.out.println("Introduce nombre archivo de clustering");
-                String clusteringPath = scanner.nextLine();
+                System.out.println("Introduce k");
+                String k = scanner.nextLine();
+                String clusteringPath = "eneko-" + k + ".csv";
+                executeEneko(puntosPath, clusteringPath, k);
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
                 DatosSalida datos = procesarResult(input, input);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
@@ -40,18 +45,15 @@ public class Main {
                 break;
             }
             case "2": {
-                System.out.println("Introduce nombre archivo de clustering");
-                String clusteringPath = scanner.nextLine();
-                clusteringPath = clusteringPath.substring(0, clusteringPath.length() - 4);
-                puntosPath = puntosPath.substring(0, puntosPath.length() - 4);
+                String clusteringPath = "eneko";
+
                 List<DatosSalida> outputs = new ArrayList<>();
 
 
-                String puntosNormalizedPath = puntosPath + "-normalized.csv";
                 for (int i = 2; i <= 10; i++) {
                     String clusteringIterationPath = clusteringPath + "-" + i + ".csv";
-                    executeEneko(puntosNormalizedPath, clusteringIterationPath, String.valueOf(i));
-                    DatosEntrada input = gestorCSV.leerCSV(puntosNormalizedPath, clusteringIterationPath);
+                    executeEneko(puntosPath, clusteringIterationPath, String.valueOf(i));
+                    DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringIterationPath);
                     DatosSalida datos = procesarResult(input, input);
                     outputs.add(datos);
                     gestorCSV.guardarCSV(clusteringPath + "_stats_clustering-" + datos.clusters() + ".csv", datos);
@@ -100,6 +102,10 @@ public class Main {
             ProcessBuilder pb = new ProcessBuilder(absolute, puntosNormalizedPath, clusteringIterationPath, k);
             pb.directory(file.getParentFile());
             Process proceso = pb.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null);
+
             proceso.waitFor(); // Esperar a que el proceso termine
             System.out.println("El ejecutable ha finalizado con código de salida: " + proceso.exitValue());
         } catch (IOException | InterruptedException e) {
@@ -116,6 +122,8 @@ public class Main {
         double wcss = MedidasInternas.calcularWCSS(input);
         double bcss = MedidasInternas.calcularBCSS(input);
         double CHIndex = MedidasInternas.calcularCalinskiHarabaszIndex(input);
-        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex); // Veremos que demonios devuelve el patrooon
+        double DBIndex = MedidasInternas.calcularDaviesBoudinIndex(input);
+        double averageSilhouette = MedidasInternas.calcularAverageSilhouette(input);
+        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex, DBIndex, averageSilhouette); // Veremos que demonios devuelve el patrooon
     }
 }

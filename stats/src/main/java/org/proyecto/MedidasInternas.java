@@ -79,6 +79,93 @@ public class MedidasInternas {
         return sum;
     }
 
+
+    public static double calcularDaviesBoudinIndex(DatosEntrada input) {
+        double dbIndex = 0;
+        double[] average = new double[input.clusters()];
+        int[] numEtiquetas = new int[input.clusters()];
+        for (int i = 0; i < input.puntos().size(); ++i) {
+            ++numEtiquetas[input.etiquetas().get(i)];
+            average[input.etiquetas().get(i)] += calcularDistanciaEuclidiana(input.puntos().get(i), input.centroides().get(input.etiquetas().get(i)));
+        }
+        for (int j = 0; j < numEtiquetas.length; ++j) {
+            average[j] /= numEtiquetas[j];
+        }
+
+        double[] nearestCluster = new double[input.clusters()]; // Inicializar a infinito
+        int[] nearestIndice = new int[input.clusters()];
+        Arrays.fill(nearestCluster, POSITIVE_INFINITY);
+
+        for (int i = 0; i < input.clusters(); ++i)
+            for (int j = 0; j < input.clusters(); ++j)
+                if (i != j) {
+                    nearestCluster[i] = min(nearestCluster[i], calcularDistanciaEuclidiana(input.centroides().get(i), input.centroides().get(j)));
+                    nearestIndice[i] = j;
+                }
+
+        for (int i = 0; i < input.clusters(); ++i)
+            dbIndex += average[i] / nearestCluster[i];
+
+        return dbIndex / input.clusters();
+    }
+
+    /*
+        Calculating the Silhouette Coefficient: Step-by-Step
+
+        For each data point, calculate two values:
+
+                — Average distance to all other data points within the same cluster (cohesion).
+
+                -> — Average distance to all data points in the nearest neighboring cluster (separation).
+
+                2. Compute the silhouette coefficient for each data point using the formula:
+
+        silhouette coefficient = (separation — cohesion) / max(separation, cohesion)
+
+    3. Calculate the average silhouette coefficient across all data points to obtain the overall silhouette score for the clustering result.*/
+    public static double calcularAverageSilhouette(DatosEntrada input) {
+        double[] nearestCluster = new double[input.clusters()];
+        int[] nearestIndice = new int[input.clusters()];
+        Arrays.fill(nearestCluster, POSITIVE_INFINITY);
+
+        for (int i = 0; i < input.clusters(); ++i)
+            for (int j = 0; j < input.clusters(); ++j)
+                if (i != j) {
+                    nearestCluster[i] = min(nearestCluster[i], calcularDistanciaEuclidiana(input.centroides().get(i), input.centroides().get(j)));
+                    nearestIndice[i] = j;
+                }
+
+        double silhouetteAverage = 0;
+
+        for (int i = 0; i < input.puntos().size(); i++) {
+            double silhouetteCoefficient = 0;
+            double cohesion = 0;
+            double separation = 0;
+
+
+            int countCohesion = 0;
+            int countSeparation = 0;
+            for (int j = 0; j < input.puntos().size(); j++) {
+                if (i != j && input.etiquetas().get(j) == input.etiquetas().get(i)) {
+                    countCohesion++;
+                    cohesion += calcularDistanciaEuclidiana(input.puntos().get(i), input.puntos().get(j));
+                }
+                if(input.etiquetas().get(j) == nearestIndice[input.etiquetas().get(i)]){
+                    separation += calcularDistanciaEuclidiana(input.puntos().get(i), input.puntos().get(j));
+                    countSeparation++;
+                }
+
+            }
+            separation /= countSeparation;
+            cohesion /= countCohesion;
+
+
+            silhouetteCoefficient = (separation - cohesion) / max(separation, cohesion);
+            silhouetteAverage += silhouetteCoefficient;
+        }
+        return silhouetteAverage / input.puntos().size();
+    }
+
     public static double calcularBCSS(DatosEntrada input) {
         Punto puntoMedio = new Punto(new double[input.dimensiones()]);
 
@@ -98,7 +185,7 @@ public class MedidasInternas {
             ++w[t];
         }
 
-        for (int j = 0; j < input.dimensiones(); ++j) {
+        for (int j = 0; j < input.clusters(); ++j) {
             bcssIndex += w[j] * calcularDistanciaEuclidianaSquared(input.centroides().get(j), puntoMedio);
         }
 
