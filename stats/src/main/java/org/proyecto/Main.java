@@ -34,12 +34,14 @@ public class Main {
         gestorCSV.normalizadorPrime(puntosPath);
         puntosPath = puntosPath.substring(0, puntosPath.length() - 4);
         puntosPath = puntosPath + "-normalized.csv";
+        System.out.println("Introduce num algoritmo");
+        String numAlgo = scanner.nextLine();
         switch (userInput) {
             case "1": {
                 System.out.println("Introduce k");
                 String k = scanner.nextLine();
                 String clusteringPath = "eneko-" + k + ".csv";
-                long elapsedTime = executeEneko(puntosPath, clusteringPath, k);
+                long elapsedTime = executeEneko(puntosPath, clusteringPath, k,numAlgo);
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
                 DatosSalida datos = procesarResult(input, input, elapsedTime);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
@@ -55,7 +57,7 @@ public class Main {
                     List<DatosSalida> outputs = new ArrayList<>();
                     for (int i = 2; i <= 10; i++) {
                         String clusteringIterationPath = clusteringPath + "-" + i + ".csv";
-                        long elapsedTime = executeEneko(puntosPath, clusteringIterationPath, String.valueOf(i));
+                        long elapsedTime = executeEneko(puntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
                         DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringIterationPath);
                         DatosSalida datos = procesarResult(input, input, elapsedTime);
                         outputs.add(datos);
@@ -110,12 +112,12 @@ public class Main {
     }
 
 
-    private static long executeEneko(String puntosNormalizedPath, String clusteringIterationPath, String k) {
+    private static long executeEneko(String puntosNormalizedPath, String clusteringIterationPath, String k, String numAlgo) {
         String rutaEjecutable = "src/main.exe"; // Ruta al ejecutable de C++
         File file = new File(rutaEjecutable);
         String absolute = file.getAbsolutePath();
         try {
-            ProcessBuilder pb = new ProcessBuilder(absolute, puntosNormalizedPath, clusteringIterationPath, k);
+            ProcessBuilder pb = new ProcessBuilder(absolute, puntosNormalizedPath, clusteringIterationPath, k, numAlgo);
             pb.directory(file.getParentFile());
             long start = Instant.now().getLong(ChronoField.MILLI_OF_SECOND);
             Process proceso = pb.start();
