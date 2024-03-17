@@ -28,12 +28,12 @@ class Kmeans {
                 assignation = assign_cluster(clusters);
                 converged = update_cluster(assignation, clusters);
                 
-                cout << "Iter:" << count << endl;
-                for (vector<int> v : assignation) {
-                    cout << "Cluster: ";
-                    for (int x : v) cout << x << ' ';
-                    cout << endl;
-                }
+                //cout << "Iter:" << count << endl;
+               // for (vector<int> v : assignation) {
+                //    cout << "Cluster: ";
+                //    for (int x : v) cout << x << ' ';
+                //    cout << endl;
+                //}
 
                 ++count;
             }
@@ -63,7 +63,7 @@ class Kmeans {
                 ++c;
 
                 
-                for (string val; getline(ss, val, ';');) {
+                for (string val; getline(ss, val, ',');) {
                     data[c].push_back(stod(val));
                     //cout << val << ' ' << stod(val) << ' ';
                 }
@@ -77,8 +77,7 @@ class Kmeans {
             file.open(FILE_OUTPUT + filename, ios::out | ios::trunc);
 
             if (!file.is_open()) throw runtime_error("Output File not opened");
-
-            file << data.size()<< "," << k << "\n";
+            file << data[0].size() << "," << k << "\n";
 
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
@@ -113,7 +112,7 @@ class Kmeans {
 
     protected:
         const int MAX_ITER = 100;
-        const string FILE_INPUT = "../data/input/";
+        const string FILE_INPUT = "../data/output/stats/";
         const string FILE_OUTPUT = "../data/output/kmeans/";
 
         int k; //Num Clusters
