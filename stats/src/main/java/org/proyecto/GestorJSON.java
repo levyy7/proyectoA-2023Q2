@@ -9,7 +9,7 @@ import java.io.IOException;
 public class GestorJSON {
     public void guardarJSON(String path, DatosSalida datos) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(datos);
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(new DatosSalidaJSON(datos.dunnIndex(), datos.averageIndex(), datos.averageTotalIndex(), datos.randIndex(), datos.wcss(), datos.clusters(), datos.bcss(), datos.CHIndex(), datos.DBIndex(), datos.averageSilhouette(), datos.elapsedTime()));
 
         File file = new File("data/output/stats/" + path);
         try (FileWriter writer = new FileWriter(file)) {
