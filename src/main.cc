@@ -4,7 +4,7 @@ using namespace std;
 
 int main() {
     Kmediods km;
-    string dataset = "Dataset2";
+    string dataset = "Dataset3";
 
 
     km.load_data(dataset + ".csv");
