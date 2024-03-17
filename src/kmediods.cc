@@ -27,38 +27,26 @@ class Kmediods:public Kmeans {
         
         virtual void execute(int num_clusters) {
             k = num_clusters;
-            vector<PointND> clusters = initialize_clusters("kpp");     
+            vector<PointND> clusters = initialize_clusters("forgy");     
             double totalCost = 0.0;
             vector<vector<int>> assignation = assign_cluster(clusters, totalCost);
 
 
             bool changed = true;
             int count = 0;
+            double best_cost = DBL_MAX;
             //cout << data.size() << endl;
             while (changed && count < MAX_ITER) {
                 changed = false;
+                double cost = 0.0;
                 vector<PointND> new_clusters = clusters;
-                for (int j = 0; j < k; ++j) {
-                    cout << assignation[j].size() << endl;
-                    for (int i = 0; i < assignation[j].size(); ++i) {
-                        PointND p = data[assignation[j][i]];
-                        if (!member(clusters, p)) {
-                            swap(new_clusters[j], p);
-                            double new_cost = 0.0;
-                            vector<vector<int>> new_assignation = assign_cluster(new_clusters, new_cost);
-                            //cout << new_cost << " " << totalCost << endl;
-                            if (new_cost < totalCost) {
-                                changed = true;
-                                totalCost = new_cost;
-                                clusters = new_clusters;
-                                assignation = new_assignation;
-                            } else {
-                                swap(new_clusters[j], p);
-                            }
-                        }
-                        //cout << i << ", ";
-                    }
-                    //cout << j << endl;
+                updateMedoids(new_clusters, assignation);
+                vector<vector<int>> new_assignation = assign_cluster(new_clusters,cost);
+                if (cost < best_cost){
+                    changed = true;
+                    best_cost = cost;
+                    assignation = new_assignation;
+                    clusters = new_clusters;
                 }
                 ++count;
                 cout << count << endl;
@@ -115,6 +103,24 @@ class Kmediods:public Kmeans {
 
             return newAssignations;
         }
+
+        virtual void updateMedoids(vector<PointND>& clusters, const vector<vector<int>>& assignation) {
+        for (int i = 0; i < clusters.size(); ++i) {
+            double minCost = 0.0;
+            int newMedoid = -1;
+            for (int j = 0; j < assignation[i].size(); ++j) {
+                double cost = 0.0;
+                for (int k = 0; k < assignation[i].size(); ++k) {
+                    cost += sed(data[assignation[i][k]], data[assignation[i][j]]);
+                }
+                if (newMedoid == -1 || cost < minCost) {
+                    newMedoid = assignation[i][j];
+                    minCost = cost;
+                }
+            }
+            clusters[i] = data[newMedoid];
+        }
+    }
 
 
 };

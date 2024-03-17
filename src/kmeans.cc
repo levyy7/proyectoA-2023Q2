@@ -28,12 +28,12 @@ class Kmeans {
                 assignation = assign_cluster(clusters);
                 converged = update_cluster(assignation, clusters);
                 
-                cout << "Iter:" << count << endl;
-                for (vector<int> v : assignation) {
-                    cout << "Cluster: ";
-                    for (int x : v) cout << x << ' ';
-                    cout << endl;
-                }
+                //cout << "Iter:" << count << endl;
+               // for (vector<int> v : assignation) {
+                //    cout << "Cluster: ";
+                //    for (int x : v) cout << x << ' ';
+                //    cout << endl;
+                //}
 
                 ++count;
             }
