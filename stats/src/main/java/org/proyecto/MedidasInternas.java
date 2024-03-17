@@ -44,7 +44,9 @@ public class MedidasInternas {
         double[] dunnDist = new double[input.clusters()];
         for (int i = 0; i < dunnDist.length; i++) {
             dunnDist[i] = distMin[i] / distMax[i];
+            if (Double.isNaN(dunnDist[i])) dunnDist[i] = 0;
         }
+
         return dunnDist;
 
     }
@@ -163,7 +165,9 @@ public class MedidasInternas {
             silhouetteCoefficient = (separation - cohesion) / max(separation, cohesion);
             silhouetteAverage += silhouetteCoefficient;
         }
-        return silhouetteAverage / input.puntos().size();
+        silhouetteAverage = silhouetteAverage / input.puntos().size();
+        if (Double.isNaN(silhouetteAverage)) silhouetteAverage = -1;
+        return silhouetteAverage;
     }
 
     public static double calcularBCSS(DatosEntrada input) {
