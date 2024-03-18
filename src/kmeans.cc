@@ -17,7 +17,7 @@ typedef vector<double> PointND;
 class Kmeans {
     protected:
         int MAX_ITER = 100;
-        string FILE_INPUT = "../data/input/";
+        string FILE_INPUT = "../data/output/stats/";
         string FILE_OUTPUT = "../data/output/kmeans/";
 
         int k; //Num Clusters
@@ -92,7 +92,7 @@ class Kmeans {
 
             if (!file.is_open()) throw runtime_error("Output File not opened");
 
-            file << data.size()<< "," << k << "\n";
+            file << data[0].size() << "," << k << "\n";
 
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
