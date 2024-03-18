@@ -1,6 +1,7 @@
+#include "kmeans.cc"
 #include "kmedians.cc"
 #include "kmediods.cc"
-#include "kmeans.cc"
+
 using namespace std;
 
 int main(int argc, char* argv[]) {
@@ -24,7 +25,7 @@ int main(int argc, char* argv[]) {
     }
 
     km.load_data(string(argv[1]));
-    km.execute(std::stoi(argv[3]));
+    km.execute(std::stoi(argv[3]), "forgy");
     km.write_results(string(argv[2]));
 
 }

@@ -1,3 +1,6 @@
+#ifndef KMEANS_H
+#define KMEANS_H
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -12,15 +15,26 @@ using namespace std;
 typedef vector<double> PointND;
 
 class Kmeans {
+    protected:
+        int MAX_ITER = 100;
+        string FILE_INPUT = "../data/input/";
+        string FILE_OUTPUT = "../data/output/kmeans/";
+
+        int k; //Num Clusters
+        vector<PointND> data;
+        
+        vector<int> final_assignation;
+        vector<PointND> final_clusters;
+
     public:
 
         Kmeans() {
         }
 
-        virtual void execute(int num_clusters) {
+        virtual void execute(int num_clusters, string initialization_method) {
             k = num_clusters;
             vector<vector<int>> assignation;
-            vector<PointND> clusters = initialize_clusters("kpp");            
+            vector<PointND> clusters = initialize_clusters(initialization_method); //kpp o forgy           
 
             bool converged = false;
             int count = 0;
@@ -29,7 +43,7 @@ class Kmeans {
                 converged = update_cluster(assignation, clusters);
                 
                 //cout << "Iter:" << count << endl;
-               // for (vector<int> v : assignation) {
+                //for (vector<int> v : assignation) {
                 //    cout << "Cluster: ";
                 //    for (int x : v) cout << x << ' ';
                 //    cout << endl;
@@ -65,7 +79,7 @@ class Kmeans {
                 
                 for (string val; getline(ss, val, ',');) {
                     data[c].push_back(stod(val));
-                    //cout << val << ' ' << stod(val) << ' ';
+                    //cout << stod(val) << ' ';
                 }
             }
         }
@@ -77,7 +91,8 @@ class Kmeans {
             file.open(FILE_OUTPUT + filename, ios::out | ios::trunc);
 
             if (!file.is_open()) throw runtime_error("Output File not opened");
-            file << data[0].size() << "," << k << "\n";
+
+            file << data.size()<< "," << k << "\n";
 
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
@@ -111,17 +126,6 @@ class Kmeans {
 
 
     protected:
-        const int MAX_ITER = 100;
-        const string FILE_INPUT = "../data/output/stats/";
-        const string FILE_OUTPUT = "../data/output/kmeans/";
-
-        int k; //Num Clusters
-        vector<PointND> data;
-        
-        vector<int> final_assignation;
-        vector<PointND> final_clusters;
- 
-
 
         //Squared euclidean distance for n dimensional points
         double sed(const PointND& p1, const PointND& p2) {
@@ -184,14 +188,27 @@ class Kmeans {
             unordered_set<int> clusters_id;
 
             //Forgy Initialization method
-            default_random_engine generator;
+            random_device rd;
+            default_random_engine generator(rd());
             uniform_int_distribution<int> distribution(0, data.size());
             
-            while (clusters_id.size() != k) clusters_id.insert(distribution(generator));
+            //cout << "Randomly generated point ids:" << endl;
+            while (clusters_id.size() != k) {
+                int id = distribution(generator);
+                clusters_id.insert(id);
+                //cout << id << endl;
+            }
 
             vector<PointND> clusters(k);
             int i = 0;
             for (int id : clusters_id) clusters[i++] = data[id];
+
+            /*cout << "Chosen initial clusters:" << endl;
+            for (PointND p : clusters) {
+                cout << "size " << p.size() << ": "; 
+                for (double x : p) cout << x << ' ';
+                cout << endl;
+            }*/
 
             return vector<PointND>(clusters.begin(), clusters.end());
         }
@@ -200,7 +217,8 @@ class Kmeans {
             vector<PointND> clusters;
 
             //K++ Initialization method
-            default_random_engine generator;
+            random_device rd;
+            default_random_engine generator(rd());
             uniform_int_distribution<int> distributionA(0, data.size());
             
             clusters.push_back(data[distributionA(generator)]);
@@ -240,3 +258,5 @@ class Kmeans {
     
 
 };
+
+#endif

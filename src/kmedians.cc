@@ -1,16 +1,11 @@
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <unordered_set>
-#include <cmath>
-#include <cfloat>
-#include <random>
+#ifndef KMEDIANS_H
+#define KMEDIANS_H
+
 #include "kmeans.cc"
 #include <algorithm>
+
 using namespace std;
 
-typedef vector<double> PointND;
 
 class Kmedians:public Kmeans {
     public:
@@ -18,17 +13,10 @@ class Kmedians:public Kmeans {
         Kmedians() {
         }
 
-        bool member(const vector<PointND>& clusters, PointND p){
-            for (int i = 0; i < clusters.size(); ++i) {
-                if (clusters[i] == p) return true;
-            }
-            return false;
-        }
-
-        virtual void execute(int num_clusters) {
+        void execute(int num_clusters, string initialization_method) override {
             k = num_clusters;
             vector<vector<int>> assignation;
-            vector<PointND> clusters = initialize_clusters("kpp");            
+            vector<PointND> clusters = initialize_clusters(initialization_method);            
 
             bool converged = false;
             int count = 0;
@@ -56,11 +44,11 @@ class Kmedians:public Kmeans {
             
         }
 
-       protected:
+       private:
 
 
 
-        virtual bool update_cluster(const vector<vector<int>>& assignations, vector<PointND>& clusters) {
+        bool update_cluster(const vector<vector<int>>& assignations, vector<PointND>& clusters) {
             bool no_change = true;
 
 
@@ -93,4 +81,13 @@ class Kmedians:public Kmeans {
             return no_change;
         } 
 
+        bool member(const vector<PointND>& clusters, PointND p){
+            for (int i = 0; i < clusters.size(); ++i) {
+                if (clusters[i] == p) return true;
+            }
+            return false;
+        }
+
 };
+
+#endif
