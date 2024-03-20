@@ -14,36 +14,24 @@ class Kmediods:public Kmeans {
 
         void execute(int num_clusters, string initialization_method) override {
             k = num_clusters;
-            vector<PointND> clusters = initialize_clusters(initialization_method);     
-            double totalCost = 0.0;
-            vector<vector<int>> assignation = assign_cluster(clusters, totalCost);
+            vector<PointND> medoids = initialize_clusters(initialization_method);     
+            double best_cost = 0.0;
+            vector<vector<int>> assignation = assign_medoids(medoids, best_cost);
 
-
-            bool changed = true;
             int count = 0;
-            double best_cost = DBL_MAX;
-            //cout << data.size() << endl;
-            while (changed && count < MAX_ITER) {
-                changed = false;
-                double cost = 0.0;
-                vector<PointND> new_clusters = clusters;
-                updateMedoids(new_clusters, assignation);
-                vector<vector<int>> new_assignation = assign_cluster(new_clusters,cost);
-                if (cost < best_cost){
-                    changed = true;
-                    best_cost = cost;
-                    assignation = new_assignation;
-                    clusters = new_clusters;
-                }
-                ++count;
-                cout << count << endl;
-            }
+            double cost = DBL_MAX;
+            do {
+
+            } while (cost < best_cost);
+
+
+
             final_assignation = vector<int>(data.size());
             for (int i = 0; i < assignation.size(); ++i) {
                 for (int j = 0; j < assignation[i].size(); ++j) 
                     final_assignation[assignation[i][j]] = i;
             }
-            final_clusters = clusters;
+            final_clusters = medoids;
             /*
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
@@ -61,7 +49,7 @@ class Kmediods:public Kmeans {
 
     private:
 
-        vector<vector<int>> assign_cluster(const vector<PointND>& clusters, double& cost) {
+        vector<vector<int>> assign_medoids(const vector<PointND>& clusters, double& cost) {
             vector<vector<int>> newAssignations(clusters.size());
 
             for (int i = 0; i < data.size(); ++i) {

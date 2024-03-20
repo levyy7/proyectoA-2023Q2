@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.proyecto.MedidasExternas.calcularRandIndex;
 import static org.proyecto.MedidasInternas.calcularAverageIndex;
@@ -41,7 +45,7 @@ public class Main {
                 System.out.println("Introduce k");
                 String k = scanner.nextLine();
                 String clusteringPath = "eneko-" + k + ".csv";
-                long elapsedTime = executeEneko(puntosPath, clusteringPath, k,numAlgo);
+                long elapsedTime = executeEneko(puntosPath, clusteringPath, k, numAlgo);
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
                 DatosSalida datos = procesarResult(input, input, elapsedTime);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
@@ -51,20 +55,36 @@ public class Main {
             case "2": {
                 String clusteringPath = "eneko";
 
-                List<List<DatosSalida>> outputsList = new ArrayList<>();
+                ExecutorService executor = Executors.newFixedThreadPool(10); // You can adjust the number of threads as needed
+                List<Future<List<DatosSalida>>> futures = new ArrayList<>();
 
                 for (int k = 0; k < 10; k++) {
-                    List<DatosSalida> outputs = new ArrayList<>();
-                    for (int i = 2; i <= 10; i++) {
-                        String clusteringIterationPath = clusteringPath + "-" + i + ".csv";
-                        long elapsedTime = executeEneko(puntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
-                        DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringIterationPath);
-                        DatosSalida datos = procesarResult(input, input, elapsedTime);
-                        outputs.add(datos);
+                    String finalPuntosPath = puntosPath;
 
-                    }
-                    outputsList.add(outputs);
+                    int finalK = k;
+                    Callable<List<DatosSalida>> task = () -> {
+                        List<DatosSalida> outputs = new ArrayList<>();
+                        for (int i = 2; i <= 10; i++) {
+                            String clusteringIterationPath = clusteringPath + "-" + i + "-" + finalK + ".csv";
+                            long elapsedTime = executeEneko(finalPuntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
+                            DatosEntrada input = gestorCSV.leerCSV(finalPuntosPath, clusteringIterationPath);
+                            DatosSalida datos = procesarResult(input, input, elapsedTime);
+                            outputs.add(datos);
+                        }
+                        return outputs;
+                    };
+
+                    futures.add(executor.submit(task));
                 }
+                // Collect results
+                List<List<DatosSalida>> outputsList = new ArrayList<>();
+                for (Future<List<DatosSalida>> future : futures) {
+                    outputsList.add(future.get());
+                }
+
+                // Shutdown the executor
+                executor.shutdown();
+
                 List<DatosSalida> averageOutput;
                 averageOutput = outputsList.getFirst();
                 for (int i = 1; i < 10; i++) {

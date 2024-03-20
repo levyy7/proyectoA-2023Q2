@@ -61,7 +61,10 @@ public class GestorCSV {
         int dimension = puntos.getFirst().valores().length;
         //*
         double[] minimo = new double[dimension];
+        Arrays.fill(minimo, Double.POSITIVE_INFINITY);
         double[] maximo = new double[dimension];
+        Arrays.fill(maximo, Double.NEGATIVE_INFINITY);
+
         for (Punto p : puntos) {
             for (int j = 0; j < dimension; ++j) {
                 minimo[j] = min(p.valores()[j], minimo[j]);
