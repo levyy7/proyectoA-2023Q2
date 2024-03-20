@@ -126,15 +126,19 @@ public class MedidasInternas {
 
     3. Calculate the average silhouette coefficient across all data points to obtain the overall silhouette score for the clustering result.*/
     public static double calcularAverageSilhouette(DatosEntrada input) {
-        double[] nearestCluster = new double[input.clusters()];
-        int[] nearestIndice = new int[input.clusters()];
+        double[] nearestCluster = new double[input.puntos().size()];
+        int[] nearestIndice = new int[input.puntos().size()];
         Arrays.fill(nearestCluster, POSITIVE_INFINITY);
 
-        for (int i = 0; i < input.clusters(); ++i)
+        for (int i = 0; i < input.puntos().size(); ++i)
             for (int j = 0; j < input.clusters(); ++j)
-                if (i != j) {
-                    nearestCluster[i] = min(nearestCluster[i], calcularDistanciaEuclidiana(input.centroides().get(i), input.centroides().get(j)));
-                    nearestIndice[i] = j;
+                if (input.etiquetas().get(i) != j) {
+                    double distanciaEuclidiana = calcularDistanciaEuclidiana(input.puntos().get(i), input.centroides().get(j));
+                    if (nearestCluster[i] > distanciaEuclidiana)
+                    {
+                        nearestCluster[i] = distanciaEuclidiana;
+                        nearestIndice[i] = j;
+                    }
                 }
 
         double silhouetteAverage = 0;
@@ -152,7 +156,7 @@ public class MedidasInternas {
                     countCohesion++;
                     cohesion += calcularDistanciaEuclidiana(input.puntos().get(i), input.puntos().get(j));
                 }
-                if(input.etiquetas().get(j) == nearestIndice[input.etiquetas().get(i)]){
+                if(input.etiquetas().get(j) == nearestIndice[i]){
                     separation += calcularDistanciaEuclidiana(input.puntos().get(i), input.puntos().get(j));
                     countSeparation++;
                 }
@@ -161,14 +165,16 @@ public class MedidasInternas {
             separation /= countSeparation;
             cohesion /= countCohesion;
 
-
             silhouetteCoefficient = (separation - cohesion) / max(separation, cohesion);
             silhouetteAverage += silhouetteCoefficient;
         }
         silhouetteAverage = silhouetteAverage / input.puntos().size();
         if (Double.isNaN(silhouetteAverage)) silhouetteAverage = -1;
         return silhouetteAverage;
+
     }
+
+
 
     public static double calcularBCSS(DatosEntrada input) {
         Punto puntoMedio = new Punto(new double[input.dimensiones()]);
