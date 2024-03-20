@@ -13,6 +13,9 @@ class Kmediods:public Kmeans {
         }
 
         void execute(int num_clusters, string initialization_method) override {
+            random_device rd;
+            default_random_engine generator(rd());
+            uniform_int_distribution<int> distribution(0, data.size());
             k = num_clusters;
             vector<PointND> medoids = initialize_clusters(initialization_method);     
             double best_cost = 0.0;
@@ -20,11 +23,41 @@ class Kmediods:public Kmeans {
 
             int count = 0;
             double cost = DBL_MAX;
+            
             do {
-
+                //cout << count++ << endl;
+                best_cost = cost;
+                int best_first_index, best_second_index;
+                double do_cost = DBL_MAX;
+                for (int i = 0; i < medoids.size(); i++)
+                {
+                    int random_point;
+                    PointND first_swapped, second_swapped;
+                    do {
+                        random_point = distribution(generator);
+                    }
+                    while (member(medoids, data[random_point]));
+                    first_swapped = medoids[i];
+                    second_swapped = data[random_point];
+                    medoids[i] = data[random_point];
+                    //swapped
+                    double local_cost = get_cost(medoids);
+                    medoids[i] = first_swapped;
+                    data[random_point] = second_swapped;
+                    //unswapped
+                    if (local_cost < cost) {
+                        cost = local_cost;
+                        best_first_index = i;
+                        best_second_index = random_point;
+                    }
+                }
+                //cout << cost << " " << best_cost << endl;
+                if (cost < best_cost) {
+                    medoids[best_first_index] = data[best_second_index];
+                }
             } while (cost < best_cost);
 
-
+            assignation = assign_medoids(medoids, cost);
 
             final_assignation = vector<int>(data.size());
             for (int i = 0; i < assignation.size(); ++i) {
@@ -48,6 +81,27 @@ class Kmediods:public Kmeans {
 
 
     private:
+
+        double get_cost(const vector<PointND>& clusters) {
+
+            double cost = 0;
+
+            for (int i = 0; i < data.size(); ++i) {
+                double min_dis = DBL_MAX;
+                int min_cluster = -1;
+
+                for (int j = 0; j < clusters.size(); ++j) {
+                    double dis = md(data[i], clusters[j]);
+
+                    if (dis < min_dis) {
+                        min_dis = dis;
+                        min_cluster = j;
+                    }
+                }
+                cost += min_dis;
+            }
+            return cost;
+        }
 
         vector<vector<int>> assign_medoids(const vector<PointND>& clusters, double& cost) {
             vector<vector<int>> newAssignations(clusters.size());
