@@ -5,27 +5,32 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    Kmeans km;
+    Kmeans* km;
 
+    cout << "main" << endl;
     switch (stoi(argv[4]))
     {
     case 0:
-        km = Kmeans();
+        km = new Kmeans();
         break;
     case 1:
-        km = Kmedians();
+        km = new Kmedians();
         break;
     case 2:
-        km = Kmediods();
+        cout << "mediods" << endl;
+        km = new Kmediods();
         break;
 
     default:
-        km = Kmeans();
+        km = new Kmeans();
         break;
     }
 
-    km.load_data(string(argv[1]));
-    km.execute(std::stoi(argv[3]), "forgy");
-    km.write_results(string(argv[2]));
+    cout << "mediods" << endl;
+    km->load_data(string(argv[1]));
+    cout << "mediods" << endl;
+    km->execute(std::stoi(argv[3]), "kpp");
+    cout << "mediods" << endl;
+    km->write_results(string(argv[2]));
 
 }

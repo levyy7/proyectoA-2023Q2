@@ -9,10 +9,11 @@ using namespace std;
 class Kmediods:public Kmeans {
     public:
 
-        Kmediods() {
+        Kmediods():Kmeans() {
         }
 
         void execute(int num_clusters, string initialization_method) override {
+            cout << "Hola" << endl;
             k = num_clusters;
             vector<PointND> clusters = initialize_clusters(initialization_method);     
             double totalCost = 0.0;
@@ -22,7 +23,7 @@ class Kmediods:public Kmeans {
             bool changed = true;
             int count = 0;
             double best_cost = DBL_MAX;
-            //cout << data.size() << endl;
+            cout << data.size() << endl;
             while (changed && count < MAX_ITER) {
                 changed = false;
                 double cost = 0.0;
