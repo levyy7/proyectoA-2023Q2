@@ -12,7 +12,10 @@ class Kmediods:public Kmeans {
         Kmediods() {
         }
 
-        void execute(int num_clusters, string initialization_method) override {
+
+    protected:
+        void algorithm(int num_clusters, string initialization_method) override {
+            cout << "estoy kmediods" << endl;
             random_device rd;
             default_random_engine generator(rd());
             uniform_int_distribution<int> distribution(0, data.size());

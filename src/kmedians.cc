@@ -13,7 +13,9 @@ class Kmedians:public Kmeans {
         Kmedians() {
         }
 
-        void execute(int num_clusters, string initialization_method) override {
+    protected:
+        void algorithm(int num_clusters, string initialization_method) override {
+            cout << "estoy kmedians" << endl;
             k = num_clusters;
             vector<vector<int>> assignation;
             vector<PointND> clusters = initialize_clusters(initialization_method);            
