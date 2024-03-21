@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cfloat>
 #include <random>
+#include <chrono>
 
 using namespace std;
 
@@ -16,8 +17,8 @@ typedef vector<double> PointND;
 
 class Kmeans {
     protected:
-        int MAX_ITER = 100;
-        string FILE_INPUT = "../data/output/stats/";
+        int MAX_ITER = 500;
+        string FILE_INPUT = "../data/output/stats";
         string FILE_OUTPUT = "../data/output/kmeans/";
 
         int k; //Num Clusters
@@ -26,42 +27,22 @@ class Kmeans {
         vector<int> final_assignation;
         vector<PointND> final_clusters;
 
+        double exec_time;
+
     public:
 
         Kmeans() {
         }
 
-        virtual void execute(int num_clusters, string initialization_method) {
-            k = num_clusters;
-            vector<vector<int>> assignation;
-            vector<PointND> clusters = initialize_clusters(initialization_method); //kpp o forgy           
+        void execute(int num_clusters, string initialization_method) {
+            auto start_time = chrono::high_resolution_clock::now();
 
-            bool converged = false;
-            int count = 0;
-            while (not converged and count != MAX_ITER) {
-                assignation = assign_cluster(clusters);
-                converged = update_cluster(assignation, clusters);
-                
-                //cout << "Iter:" << count << endl;
-                //for (vector<int> v : assignation) {
-                //    cout << "Cluster: ";
-                //    for (int x : v) cout << x << ' ';
-                //    cout << endl;
-                //}
-
-                ++count;
-            }
-
+            algorithm(num_clusters, initialization_method);
             
-            final_assignation = vector<int>(data.size());
-            for (int i = 0; i < assignation.size(); ++i) {
-                for (int j = 0; j < assignation[i].size(); ++j) 
-                    final_assignation[assignation[i][j]] = i;
-            }
-
-            final_clusters = clusters;
-            
+            auto end_time = chrono::high_resolution_clock::now();
+            exec_time = chrono::duration_cast<chrono::microseconds>(end_time - start_time).count();
         }
+
 
         void load_data(string filename) {
 
@@ -92,7 +73,7 @@ class Kmeans {
 
             if (!file.is_open()) throw runtime_error("Output File not opened");
 
-            file << data[0].size() << "," << k << "\n";
+            file << data[0].size() << "," << k << "," << exec_time << "\n";
 
             for (PointND p : final_clusters) {
                 for (int i = 0; i < p.size(); ++i) {
@@ -126,6 +107,38 @@ class Kmeans {
 
 
     protected:
+        virtual void algorithm(int num_clusters, string initialization_method) {
+            cout << "estoy kmeans" << endl;
+            k = num_clusters;
+            vector<vector<int>> assignation;
+            vector<PointND> clusters = initialize_clusters(initialization_method); //kpp o forgy           
+
+            bool converged = false;
+            int count = 0;
+            while (not converged and count != MAX_ITER) {
+                assignation = assign_cluster(clusters);
+                converged = update_cluster(assignation, clusters);
+                
+                //cout << "Iter:" << count << endl;
+                //for (vector<int> v : assignation) {
+                //    cout << "Cluster: ";
+                //    for (int x : v) cout << x << ' ';
+                //    cout << endl;
+                //}
+
+                ++count;
+            }
+
+            
+            final_assignation = vector<int>(data.size());
+            for (int i = 0; i < assignation.size(); ++i) {
+                for (int j = 0; j < assignation[i].size(); ++j) 
+                    final_assignation[assignation[i][j]] = i;
+            }
+
+            final_clusters = clusters;
+            
+        }
 
         //Squared euclidean distance for n dimensional points
         double sed(const PointND& p1, const PointND& p2) {
