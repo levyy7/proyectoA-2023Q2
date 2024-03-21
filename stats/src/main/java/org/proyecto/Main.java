@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.proyecto.MedidasExternas.calcularRandIndex;
@@ -22,6 +19,7 @@ public class Main {
 
     private static final GestorCSV gestorCSV = new GestorCSV();
     private static final GestorJSON gestorJSON = new GestorJSON();
+    public static final int NUM_ITERATIONS = 10;
 
     public static void main(String[] args) throws Exception {
         System.out.println("1 -> Obtener stats de un clustering");
@@ -53,45 +51,39 @@ public class Main {
             case "2": {
                 String clusteringPath = "eneko";
 
-                ExecutorService executor = Executors.newFixedThreadPool(10); // You can adjust the number of threads as needed
-                List<Future<List<DatosSalida>>> futures = new ArrayList<>();
+                //ExecutorService executor = Executors.newFixedThreadPool(NUM_ITERATIONS); // You can adjust the number of threads as needed
+                List<List<DatosSalida>> futures = new ArrayList<>();
 
-                for (int k = 0; k < 10; k++) {
+                for (int k = 0; k < NUM_ITERATIONS; k++) {
                     String finalPuntosPath = puntosPath;
 
                     int finalK = k;
-                    Callable<List<DatosSalida>> task = () -> {
-                        List<DatosSalida> outputs = new ArrayList<>();
-                        for (int i = 2; i <= 10; i++) {
-                            String clusteringIterationPath = clusteringPath + "-" + i + "-" + finalK + ".csv";
-                            executeEneko(finalPuntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
-                            DatosEntrada input = gestorCSV.leerCSV(finalPuntosPath, clusteringIterationPath);
-                            DatosSalida datos = procesarResult(input, input);
-                            outputs.add(datos);
-                        }
-                        return outputs;
-                    };
 
-                    futures.add(executor.submit(task));
+                    List<DatosSalida> outputs = new ArrayList<>();
+                    for (int i = 2; i <= 10; i++) {
+                        String clusteringIterationPath = clusteringPath + "-" + i + "-" + finalK + ".csv";
+                        executeEneko(finalPuntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
+                        DatosEntrada input = gestorCSV.leerCSV(finalPuntosPath, clusteringIterationPath);
+                        DatosSalida datos = procesarResult(input, input);
+                        outputs.add(datos);
+                    }
+
+
+                    futures.add(outputs);
                 }
+
                 // Collect results
-                List<List<DatosSalida>> outputsList = new ArrayList<>();
-                for (Future<List<DatosSalida>> future : futures) {
-                    outputsList.add(future.get());
-                }
-
-                // Shutdown the executor
-                executor.shutdown();
+                List<List<DatosSalida>> outputsList = new ArrayList<>(futures);
 
                 List<DatosSalida> averageOutput;
                 averageOutput = outputsList.getFirst();
-                for (int i = 1; i < 10; i++) {
+                for (int i = 1; i < NUM_ITERATIONS; i++) {
                     for (int j = 0; j < averageOutput.size(); j++) {
                         averageOutput.get(j).sum(outputsList.get(i).get(j));
                     }
                 }
                 for (DatosSalida datos : averageOutput) {
-                    datos.dividir();
+                    datos.dividir(NUM_ITERATIONS);
                     gestorCSV.guardarCSV(clusteringPath + "_stats_clustering-" + datos.clusters() + ".csv", datos);
                     gestorJSON.guardarJSON(clusteringPath + "_stats_clustering-" + datos.clusters() + ".json", datos);
                 }

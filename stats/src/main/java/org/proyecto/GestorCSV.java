@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class GestorCSV {
 
         int dimensiones = Integer.parseInt(enekoDatos.getFirst()[0]);
         int clusters = Integer.parseInt(enekoDatos.getFirst()[1]);
-        long execTime = Integer.parseInt(enekoDatos.getFirst()[2]);
+        BigInteger execTime = new BigInteger(enekoDatos.getFirst()[2]);
         List<Punto> puntos = profeDatos.stream().map(elem -> new Punto(Arrays.stream(elem).mapToDouble(Double::parseDouble).toArray())).toList();
         List<Punto> centroides = new ArrayList<>();
         for (int i = 1; i <= clusters; i++) {

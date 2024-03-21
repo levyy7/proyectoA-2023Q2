@@ -1,9 +1,10 @@
 package org.proyecto;
 
+import java.math.BigInteger;
 import java.util.Objects;
 
 public final class DatosSalida {
-    private long elapsedTime;
+    private BigInteger elapsedTime;
     private double[] dunnIndex;
     private double[] averageIndex;
     private double averageTotalIndex;
@@ -17,7 +18,7 @@ public final class DatosSalida {
 
     public DatosSalida(double[] dunnIndex, double[] averageIndex, double averageTotalIndex, double randIndex,
                        double wcss, int clusters, double bcss, double CHIndex, double DBIndex,
-                       double averageSilhouette, long elapsedTime) {
+                       double averageSilhouette, BigInteger elapsedTime) {
         this.dunnIndex = dunnIndex;
         this.averageIndex = averageIndex;
         this.averageTotalIndex = averageTotalIndex;
@@ -46,26 +47,26 @@ public final class DatosSalida {
         this.CHIndex +=  datos.CHIndex;
         this.DBIndex += datos.DBIndex;
         this.averageSilhouette += datos.averageSilhouette;
-        this.elapsedTime += elapsedTime;
+        this.elapsedTime = elapsedTime.add(datos.elapsedTime);
 
     }
 
-    void dividir() {
+    void dividir(int iterations) {
         for (int i = 0; i < dunnIndex.length; i++) {
-            this.dunnIndex[i] /= 10;
+            this.dunnIndex[i] /= iterations;
         }
         for (int i = 0; i < averageIndex.length; i++) {
-            this.averageIndex[i] /= 10;
+            this.averageIndex[i] /= iterations;
         }
-        this.averageTotalIndex /= 10;
-        this.randIndex /= 10;
-        this.wcss /= 10;
-        this.clusters /= 10;
-        this.bcss /= 10;
-        this.CHIndex /= 10;
-        this.DBIndex /= 10;
-        this.averageSilhouette /= 10;
-        this.elapsedTime /= 10;
+        this.averageTotalIndex /= iterations;
+        this.randIndex /= iterations;
+        this.wcss /= iterations;
+        this.clusters /= iterations;
+        this.bcss /= iterations;
+        this.CHIndex /= iterations;
+        this.DBIndex /= iterations;
+        this.averageSilhouette /= iterations;
+        this.elapsedTime = elapsedTime.divide(new BigInteger(String.valueOf(iterations)));
 
     }
 
@@ -146,7 +147,7 @@ public final class DatosSalida {
                 "averageSilhouette=" + averageSilhouette + ']';
     }
 
-    public long elapsedTime() {
+    public BigInteger elapsedTime() {
         return elapsedTime;
     }
 }
