@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.time.Instant;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,9 +43,9 @@ public class Main {
                 System.out.println("Introduce k");
                 String k = scanner.nextLine();
                 String clusteringPath = "eneko-" + k + ".csv";
-                long elapsedTime = executeEneko(puntosPath, clusteringPath, k, numAlgo);
+                executeEneko(puntosPath, clusteringPath, k, numAlgo);
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
-                DatosSalida datos = procesarResult(input, input, elapsedTime);
+                DatosSalida datos = procesarResult(input, input);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
                 gestorJSON.guardarJSON("output_stats_clustering.json", datos);
                 break;
@@ -66,9 +64,9 @@ public class Main {
                         List<DatosSalida> outputs = new ArrayList<>();
                         for (int i = 2; i <= 10; i++) {
                             String clusteringIterationPath = clusteringPath + "-" + i + "-" + finalK + ".csv";
-                            long elapsedTime = executeEneko(finalPuntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
+                            executeEneko(finalPuntosPath, clusteringIterationPath, String.valueOf(i), numAlgo);
                             DatosEntrada input = gestorCSV.leerCSV(finalPuntosPath, clusteringIterationPath);
-                            DatosSalida datos = procesarResult(input, input, elapsedTime);
+                            DatosSalida datos = procesarResult(input, input);
                             outputs.add(datos);
                         }
                         return outputs;
@@ -114,10 +112,10 @@ public class Main {
                 String clusteringPath2 = scanner.nextLine();
                 DatosEntrada input = gestorCSV.leerCSV(puntosPath, clusteringPath);
                 DatosEntrada input2 = gestorCSV.leerCSV(puntosPath, clusteringPath2);
-                DatosSalida datos = procesarResult(input, input2, 0);
+                DatosSalida datos = procesarResult(input, input2);
                 gestorCSV.guardarCSV("output_stats_clustering.csv", datos);
                 gestorJSON.guardarJSON("output_stats_clustering.json", datos);
-                datos = procesarResult(input2, input, 0);
+                datos = procesarResult(input2, input);
                 gestorCSV.guardarCSV("output_stats_clustering_2.csv", datos);
                 gestorJSON.guardarJSON("output_stats_clustering_2.json", datos);
                 break;
@@ -132,30 +130,26 @@ public class Main {
     }
 
 
-    private static long executeEneko(String puntosNormalizedPath, String clusteringIterationPath, String k, String numAlgo) {
+    private static void executeEneko(String puntosNormalizedPath, String clusteringIterationPath, String k, String numAlgo) {
         String rutaEjecutable = "src/main.exe"; // Ruta al ejecutable de C++
         File file = new File(rutaEjecutable);
         String absolute = file.getAbsolutePath();
         try {
             ProcessBuilder pb = new ProcessBuilder(absolute, puntosNormalizedPath, clusteringIterationPath, k, numAlgo);
             pb.directory(file.getParentFile());
-            long start = Instant.now().getLong(ChronoField.MILLI_OF_SECOND);
             Process proceso = pb.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) ;
 
             proceso.waitFor(); // Esperar a que el proceso termine
-            long stop = Instant.now().getLong(ChronoField.MILLI_OF_SECOND);
             System.out.println("El ejecutable ha finalizado con código de salida: " + proceso.exitValue());
-            return stop - start;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        return -1;
     }
 
-    private static DatosSalida procesarResult(DatosEntrada input, DatosEntrada input2, long elapsedTime) {
+    private static DatosSalida procesarResult(DatosEntrada input, DatosEntrada input2) {
         double[] dunnIndex = calcularDunnIndex(input);
         double[] averageIndex = calcularAverageIndex(input);
         double averageTotalIndex = Arrays.stream(averageIndex).sum() / averageIndex.length;
@@ -166,6 +160,6 @@ public class Main {
         double CHIndex = MedidasInternas.calcularCalinskiHarabaszIndex(input);
         double DBIndex = MedidasInternas.calcularDaviesBoudinIndex(input);
         double averageSilhouette = MedidasInternas.calcularAverageSilhouette(input);
-        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex, DBIndex, averageSilhouette, elapsedTime); // Veremos que demonios devuelve el patrooon
+        return new DatosSalida(dunnIndex, averageIndex, averageTotalIndex, randIndex, wcss, clusters, bcss, CHIndex, DBIndex, averageSilhouette, input.execTime()); // Veremos que demonios devuelve el patrooon
     }
 }

@@ -27,6 +27,7 @@ public class GestorCSV {
 
         int dimensiones = Integer.parseInt(enekoDatos.getFirst()[0]);
         int clusters = Integer.parseInt(enekoDatos.getFirst()[1]);
+        long execTime = Integer.parseInt(enekoDatos.getFirst()[2]);
         List<Punto> puntos = profeDatos.stream().map(elem -> new Punto(Arrays.stream(elem).mapToDouble(Double::parseDouble).toArray())).toList();
         List<Punto> centroides = new ArrayList<>();
         for (int i = 1; i <= clusters; i++) {
@@ -37,7 +38,7 @@ public class GestorCSV {
             etiquetas.add(Integer.valueOf(enekoDatos.get(i)[0]));
         }
 
-        return new DatosEntrada(dimensiones, clusters, puntos, centroides, etiquetas);
+        return new DatosEntrada(dimensiones, clusters, puntos, centroides, etiquetas, execTime);
 
     }
 
